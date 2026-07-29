@@ -4,6 +4,7 @@ import "package:qinglong_flutter/data/api/qinglong_api.dart";
 import "package:qinglong_flutter/theme/app_visuals.dart";
 import "package:qinglong_flutter/ui/components/shared_components.dart";
 import "package:qinglong_flutter/ui/screens/tasks/tasks_view_model.dart";
+import "task_time_formatter.dart";
 import "dart:async";
 
 class TasksScreen extends StatefulWidget {
@@ -1292,6 +1293,7 @@ class _TaskCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final status = _statusInfo(cs);
+    final lastRun = formatTaskLastRun(task.lastExecuteTime);
     final cardRadius = BorderRadius.circular(16);
 
     return Material(
@@ -1373,11 +1375,10 @@ class _TaskCard extends StatelessWidget {
                         color: cs.onSurfaceVariant,
                       ),
                     ),
-                    if (task.lastExecuteTime != null &&
-                        task.lastExecuteTime!.isNotEmpty) ...[
+                    if (lastRun.isNotEmpty) ...[
                       const SizedBox(height: 4),
                       Text(
-                        task.lastExecuteTime!,
+                        lastRun,
                         style: TextStyle(
                           fontSize: 12,
                           color: cs.onSurfaceVariant.withValues(alpha: 0.6),

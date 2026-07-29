@@ -1,26 +1,23 @@
 #!/usr/bin/env python3
 import os
-from PIL import Image
+from PIL import Image, ImageDraw, ImageEnhance, ImageFilter
 R = os.path.dirname(os.path.abspath(__file__))
-img = Image.open(f'{R}/11.png').convert('RGBA')
-px = img.load()
-w, h = img.size
 
-r, g, b, n = 0, 0, 0, 0
-for x in range(w):
-    for y in range(h):
-        if px[x, y][3] > 128:
-            r += px[x, y][0]
-            g += px[x, y][1]
-            b += px[x, y][2]
-            n += 1
-fill = (r // n, g // n, b // n) if n > 0 else (0, 0, 0)
-print(f"Fill color: rgb{fill}")
+# Use the existing mark as the source, but remove its outer padding and soften
+# the source texture before producing small launcher sizes.
+source = Image.open(f'{R}/web/icons/Icon-512.png').convert('RGB').resize(
+    (1024, 1024), Image.Resampling.LANCZOS
+)
+source = ImageEnhance.Color(source).enhance(1.08)
+source = ImageEnhance.Contrast(source).enhance(1.04)
+source = source.filter(ImageFilter.MedianFilter(size=3))
 
-for x in range(w):
-    for y in range(h):
-        if px[x, y][3] < 255:
-            px[x, y] = (fill[0], fill[1], fill[2], 255)
+img = Image.new('RGB', (1024, 1024), '#063c3a')
+mask = Image.new('L', (1024, 1024), 0)
+ImageDraw.Draw(mask).rounded_rectangle(
+    (0, 0, 1023, 1023), radius=180, fill=255
+)
+img.paste(source, (0, 0), mask)
 
 
 def gen(name, size):

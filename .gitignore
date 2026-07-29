@@ -36,6 +36,7 @@ migrate_working_dir/
 # Local build/tooling state
 /.arm64-build/
 /.codewhale/
+/QL-Next-arm64.apk
 /1.jpg
 /2.jpg
 

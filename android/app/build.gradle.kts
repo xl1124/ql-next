@@ -31,7 +31,6 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.qlnext.android"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
@@ -152,8 +151,9 @@ val repairReleaseApk by tasks.registering {
             keystorePath != null && file(keystorePath).isFile -> file(keystorePath)
             else -> file(System.getProperty("user.home")).resolve(".android/debug.keystore")
         }
-        check(signingKeystore.isFile) {
-            "Keystore not found at ${signingKeystore.absolutePath}"
+        if (!signingKeystore.isFile) {
+            logger.lifecycle("No keystore available; skipping APK repair")
+            return@doLast
         }
         apks.forEach { apk ->
             val staging = file(
