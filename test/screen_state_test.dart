@@ -1277,6 +1277,23 @@ void main() {
       expect(find.text('Cleanup'), findsOneWidget);
     });
 
+    testWidgets('new task form remains scrollable for keyboard input', (
+      tester,
+    ) async {
+      final api = FakeQingLongApi(
+        taskResponse: QingLongResponse<CronListData>(
+          data: CronListData(data: _sampleTasks(), total: 2),
+        ),
+      );
+
+      await _pumpTasks(tester, api);
+      await tester.tap(find.byTooltip('新建'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('新建任务'), findsOneWidget);
+      expect(find.byType(SingleChildScrollView), findsOneWidget);
+    });
+
     testWidgets('status filter shows only disabled tasks', (tester) async {
       final api = FakeQingLongApi(
         taskResponse: QingLongResponse<CronListData>(

@@ -646,127 +646,148 @@ class _TasksScreenState extends State<TasksScreen> {
       backgroundColor: Colors.transparent,
       builder: (ctx) {
         var mcs = Theme.of(ctx).colorScheme;
-        return AppVisuals.glassSurface(
-          context: ctx,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          withShadow: true,
-          child: SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  margin: const EdgeInsets.only(top: 12, bottom: 14),
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: mcs.onSurface.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom,
+          ),
+          child: AppVisuals.glassSurface(
+            context: ctx,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            withShadow: true,
+            child: SafeArea(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.sizeOf(ctx).height * 0.75,
                 ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 2, 24, 12),
-                  child: Row(
-                    children: [
-                      Icon(Icons.add_task, color: mcs.primary, size: 22),
-                      const SizedBox(width: 10),
-                      Text(
-                        "新建任务",
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          color: mcs.onSurface,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                _TaskFormField(
-                  controller: nCtl,
-                  label: "任务名",
-                  hintText: "例如：每日签到",
-                  icon: Icons.label_outline,
-                  colorScheme: mcs,
-                ),
-                _TaskFormField(
-                  controller: cCtl,
-                  label: "命令",
-                  hintText: "输入要执行的命令",
-                  icon: Icons.terminal,
-                  colorScheme: mcs,
-                ),
-                _TaskFormField(
-                  controller: sCtl,
-                  label: "定时规则",
-                  hintText: "0 0 * * *",
-                  icon: Icons.schedule,
-                  colorScheme: mcs,
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: SizedBox(
-                          height: 48,
-                          child: FilledButton.tonalIcon(
-                            onPressed: () {
-                              _vm.hideAddDialog();
-                              Navigator.pop(ctx);
-                            },
-                            icon: const Icon(Icons.close),
-                            label: const Text("取消"),
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(0, 12, 0, 24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          margin: const EdgeInsets.only(top: 12, bottom: 14),
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: mcs.onSurface.withValues(alpha: 0.3),
+                            borderRadius: BorderRadius.circular(2),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: SizedBox(
-                          height: 48,
-                          child: FilledButton.icon(
-                            onPressed: _formBusy
-                                ? null
-                                : () async {
-                                    if (nCtl.text.trim().isEmpty ||
-                                        cCtl.text.trim().isEmpty ||
-                                        sCtl.text.trim().isEmpty) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        const SnackBar(
-                                          content: Text('请完整填写任务名、命令和定时规则'),
-                                        ),
-                                      );
-                                      return;
-                                    }
-                                    setState(() => _formBusy = true);
-                                    final error = await _vm.addTask(
-                                      nCtl.text.trim(),
-                                      cCtl.text.trim(),
-                                      sCtl.text.trim(),
-                                    );
-                                    if (!mounted) return;
-                                    setState(() => _formBusy = false);
-                                    if (error != null) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(content: Text(error)),
-                                      );
-                                    } else {
-                                      if (!ctx.mounted) return;
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(24, 2, 24, 12),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.add_task,
+                                color: mcs.primary,
+                                size: 22,
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                "新建任务",
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
+                                  color: mcs.onSurface,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        _TaskFormField(
+                          controller: nCtl,
+                          label: "任务名",
+                          hintText: "例如：每日签到",
+                          icon: Icons.label_outline,
+                          colorScheme: mcs,
+                        ),
+                        _TaskFormField(
+                          controller: cCtl,
+                          label: "命令",
+                          hintText: "输入要执行的命令",
+                          icon: Icons.terminal,
+                          colorScheme: mcs,
+                        ),
+                        _TaskFormField(
+                          controller: sCtl,
+                          label: "定时规则",
+                          hintText: "0 0 * * *",
+                          icon: Icons.schedule,
+                          colorScheme: mcs,
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: SizedBox(
+                                  height: 48,
+                                  child: FilledButton.tonalIcon(
+                                    onPressed: () {
+                                      _vm.hideAddDialog();
                                       Navigator.pop(ctx);
-                                    }
-                                  },
-                            icon: const Icon(Icons.add_task),
-                            label: Text(_formBusy ? '创建中' : '创建'),
+                                    },
+                                    icon: const Icon(Icons.close),
+                                    label: const Text("取消"),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: SizedBox(
+                                  height: 48,
+                                  child: FilledButton.icon(
+                                    onPressed: _formBusy
+                                        ? null
+                                        : () async {
+                                            if (nCtl.text.trim().isEmpty ||
+                                                cCtl.text.trim().isEmpty ||
+                                                sCtl.text.trim().isEmpty) {
+                                              ScaffoldMessenger.of(
+                                                context,
+                                              ).showSnackBar(
+                                                const SnackBar(
+                                                  content: Text(
+                                                    '请完整填写任务名、命令和定时规则',
+                                                  ),
+                                                ),
+                                              );
+                                              return;
+                                            }
+                                            setState(() => _formBusy = true);
+                                            final error = await _vm.addTask(
+                                              nCtl.text.trim(),
+                                              cCtl.text.trim(),
+                                              sCtl.text.trim(),
+                                            );
+                                            if (!mounted) return;
+                                            setState(() => _formBusy = false);
+                                            if (error != null) {
+                                              ScaffoldMessenger.of(
+                                                context,
+                                              ).showSnackBar(
+                                                SnackBar(content: Text(error)),
+                                              );
+                                            } else {
+                                              if (!ctx.mounted) return;
+                                              Navigator.pop(ctx);
+                                            }
+                                          },
+                                    icon: const Icon(Icons.add_task),
+                                    label: Text(_formBusy ? '创建中' : '创建'),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 8),
+                      ],
+                    ),
                   ),
                 ),
-                const SizedBox(height: 8),
-              ],
+              ),
             ),
           ),
         );
