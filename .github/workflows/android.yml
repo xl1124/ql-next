@@ -1,0 +1,129 @@
+name: Build Android APKs
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-android:
+    name: Build ARM APKs
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Precache Android artifacts
+        run: flutter precache --android
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze Dart code
+        run: dart analyze
+
+      - name: Run tests
+        run: flutter test
+
+      - name: Prepare release signing key
+        shell: bash
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            mkdir -p "$HOME/.android"
+            echo "$KEYSTORE_BASE64" | base64 -d > "$HOME/.android/release.keystore"
+            echo "KEYSTORE_PATH=$HOME/.android/release.keystore" >> "$GITHUB_ENV"
+          else
+            echo "No KEYSTORE_BASE64 secret set; falling back to debug signing."
+          fi
+
+      - name: Read version from pubspec
+        id: version
+        run: |
+          VERSION=$(grep '^version: ' pubspec.yaml | head -1 | sed 's/version: //' | cut -d'+' -f1)
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Building QL-Next v$VERSION (#${{ github.run_number }})"
+
+      - name: Build ARM64 APK
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          flutter build apk \
+            --release \
+            --split-per-abi \
+            --target-platform android-arm64 \
+            --build-name="${{ steps.version.outputs.version }}" \
+            --build-number="${{ github.run_number }}"
+
+      - name: Build ARM32 APK
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          flutter build apk \
+            --release \
+            --split-per-abi \
+            --target-platform android-arm \
+            --build-name="${{ steps.version.outputs.version }}" \
+            --build-number="${{ github.run_number }}"
+
+      - name: Collect APKs
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk \
+            artifacts/QL-Next-arm64-v8a.apk
+          cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk \
+            artifacts/QL-Next-armeabi-v7a.apk
+
+      - name: Upload ARM64 APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: QL-Next-arm64-v8a
+          path: artifacts/QL-Next-arm64-v8a.apk
+          if-no-files-found: error
+
+      - name: Upload ARM32 APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: QL-Next-armeabi-v7a
+          path: artifacts/QL-Next-armeabi-v7a.apk
+          if-no-files-found: error
+
+      - name: Create/Update Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: continuous
+          name: "QL-Next Build #${{ github.run_number }} (v${{ steps.version.outputs.version }})"
+          body: |
+            - 版本：v${{ steps.version.outputs.version }}
+            - 构建号：${{ github.run_number }}
+            - 提交：${{ github.sha }}
+          artifacts: "artifacts/*.apk"
+          allowUpdates: true
+          removesArtifacts: true
+          makeLatest: true
+          token: ${{ secrets.GITHUB_TOKEN }}
